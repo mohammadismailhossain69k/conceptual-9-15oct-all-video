@@ -3,15 +3,18 @@ import { getAuth } from "firebase/auth";
 
 // Todo: Replace the following with your app's Firebase project configuration
 // See: https://firebase.google.com/docs/web/learn-more#config-object
+
+//akan teke amra file take hide korsi and hide kore amra file take raksi .env te 
 const firebaseConfig = {
-  apiKey: "AIzaSyCw9uwdd00I2top2ipqmNte9UbZIxybyUo",
-  authDomain: "conceptual-9-15-oct-project.firebaseapp.com",
-  projectId: "conceptual-9-15-oct-project",
-  storageBucket: "conceptual-9-15-oct-project.firebasestorage.app",
-  messagingSenderId: "1064728725932",
-  appId: "1:1064728725932:web:613b8d97356622a6409209",
-  measurementId: "G-GQX6QC5TW1",
+  apiKey: import.meta.env.VITE_apiKey,
+  authDomain: import.meta.env.VITE_authDomain,
+  projectId: import.meta.env.VITE_projectId,
+  storageBucket: import.meta.env.VITE_storageBucket,
+  messagingSenderId: import.meta.env.VITE_messagingSenderId, 
+  appId: import.meta.env.VITE_appId,
+  measurementId: import.meta.env.VITE_measurementId
 };
+
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
