@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
 import MyContainer from "../components/MyContainer";
 import MyLink from "../components/MyLink";
 // import { toast } from "react-toastify";
@@ -6,14 +6,20 @@ import { auth } from "../fairbase/fairbase.config";
 import { useState } from "react";
 import { FaEye } from "react-icons/fa";
 import { IoEyeOff } from "react-icons/io5";
-import { toast } from "sonner";
+
+import {toast} from "react-toastify"
+import { AuthContext } from "../context/AuthContext";
 
 const SignUp = () => {
+  
+
   const [show,setShow] = useState(false)
 
   const handleSignup = (e) => {
   e.preventDefault();
 
+  const displayName = e.target.name.value;
+  const photoURL = e.target.photo.value;
   const email = e.target.email.value; 
   const password = e.target.password.value;
   //6 tar kom password hole ai error ta dive 
@@ -29,12 +35,43 @@ if (!regex.test(password)) {
   return
 }
 
-  console.log("Sign Up Complete", { email, password });
+  console.log("Sign Up Complete", { displayName,photoURL,email, password });
 
-if(password.includes("A") )
+// if(password.includes("A") )
+
+  //1st step: create user 
 
   createUserWithEmailAndPassword(auth, email, password)
     .then((res) => {
+
+    //2nd step: Update profile
+      updateProfile(res.user, {
+    displayName,//key and value jodi sem hoy tahole amader key value dithe hobe na 
+    photoURL,
+})
+
+.then(()=> {
+  console.log (res)
+
+  // 3rd step: Email Verification
+sendEmailVerification(res.user)
+  .then(()=> {
+     console.log (res)
+    toast.success('Signup successful, Cheek your email to validate you account')
+  })
+  .catch(e=> {
+    toast.error(e.message)
+  })
+
+  //finished email verification work 
+  console.log (res)
+  toast.success("Sign up Successful")
+})
+.catch(e=>{
+  toast.error(e.message)
+})
+
+      //finished Signup Profile Update work 
       console.log(res);
       toast.success('Signup successful');
     })
@@ -100,6 +137,24 @@ if(password.includes("A") )
             </h2>
 
             <form onSubmit={handleSignup}  className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Dev.Sabbir"
+                  className="input input-bordered w-full bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-pink-400 required"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Photo</label>
+                <input
+                  type="text"
+                  name="photo"
+                  placeholder="Your photo URL here"
+                  className="input input-bordered w-full bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-pink-400 required"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Email</label>
                 <input

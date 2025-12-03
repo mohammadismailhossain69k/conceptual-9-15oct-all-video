@@ -1,15 +1,22 @@
-import React, {  useState } from 'react';
+import React, {  useRef, useState } from 'react';
 import MyContainer from '../components/MyContainer';
 import MyLink from '../components/MyLink';
 import { FaEye } from "react-icons/fa";
 import { IoEyeOff } from "react-icons/io5";
-import { GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup, signOut} from 'firebase/auth';
+import { GithubAuthProvider, GoogleAuthProvider, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signOut} from 'firebase/auth';
 import { auth } from '../fairbase/fairbase.config';
 import { toast } from 'react-toastify';
 const Signin = () => {
   const [show,setShow] = useState(false)
-  const [user, setUser]= useState(null)
+const [user, setUser]= useState(null)
+// forget password ar jorno useRef use
+
+const emailRaf = useRef(null)
+
+// firebase teke anchi
 const googleProvider = new GoogleAuthProvider();
+const githubProvider = new GithubAuthProvider();
+
 
 const handleSignin = (e)=> {
   e.preventDefault();
@@ -20,6 +27,14 @@ const handleSignin = (e)=> {
   //fairbase teke ana signin work
   signInWithEmailAndPassword(auth, email, password)
   .then(res=> {
+    // amra akane cheek korbo email verify kina 
+    if(res.user.emailVerified === false){
+      console.log(res)
+      toast.error('You email not verified')
+      return;
+    }
+
+    //
     console.log (res)
     //user take anbo 
     setUser(res.user)
@@ -59,6 +74,33 @@ console.log (user)
   }
 //Finished Signin google work 
 
+// Github Signin work 
+  const handleGithubSignin = () =>{
+    signInWithPopup(auth, githubProvider)
+    .then(res=>{
+      console.log (res)
+      toast.success('Github Signin Successful')
+      setUser(res.user)
+    })
+    .catch(e=>{
+      console.log (e)
+      toast.error(e.message)
+    })
+  }
+
+  // Forget password work 
+  const handleForgerPassword = (e) => {
+    // useRef diye value ta anci ueRef use kora hoys email 
+    const email = emailRaf.current.value
+    sendPasswordResetEmail(auth, email)
+    .then(res=>{
+      console.log (res)
+      toast.success("Cheek your email to reset password")
+    })
+    .catch(e=> {
+      toast.error(e.message)
+    })
+  }
 
     return (
     <div className="min-h-[calc(100vh-20px)] flex items-center justify-center bg-linear-to-br from-blue-500 via-indigo-600 to-purple-600 relative overflow-hidden">
@@ -89,8 +131,9 @@ console.log (user)
           <h2 className='text-xl font-semibold text-center mt-3'>{user?.displayName}</h2>
           <p className='text-white/80 font-semibold my-3 text-center'>{user?.email}</p>
           <button onClick={handleSignOUt} className='my-btn'>Sign Out</button>
-
-         </div>: 
+          
+          </div>
+         : 
             <form onSubmit={handleSignin} className="space-y-5">
               <h2 className="text-2xl font-semibold mb-2 text-center text-white">
                 Sign In
@@ -101,6 +144,7 @@ console.log (user)
                 <input
                   type="email"
                   name="email"
+                  ref={emailRaf}
                 //   ref={emailRef}
                   placeholder="example@email.com"
                   className="input input-bordered w-full bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -118,17 +162,16 @@ console.log (user)
                <span onClick={()=> setShow(!show)} className='absolute cursor-pointer right-2 top-9 '>{show ? <FaEye/> : <IoEyeOff/>}</span>
               </div>
 
-              <button
-                className="hover:underline cursor-pointer"
-                type="button"
-              >
-                Forget password?
-              </button>
+          {/* Forget password button  */}
 
+              <button className='hover:underline cursor-pointer' 
+              type='button'
+               onClick={handleForgerPassword}>Forget Password </button>
+              {/* login button  */}
               <button type="submit" className="my-btn">
                 Login
               </button>
-
+              
               {/* Divider */}
               <div className="flex items-center justify-center gap-2 my-2">
                 <div className="h-px w-16 bg-white/30"></div>
@@ -150,7 +193,7 @@ console.log (user)
               </button>
 
               {/* Github Signin */}
-              <button
+              <button onClick={handleGithubSignin}
                 type="button"
                 className="flex items-center justify-center gap-3 bg-white text-gray-800 px-5 py-2 rounded-lg w-full font-semibold hover:bg-gray-100 transition-colors cursor-pointer"
               >

@@ -1,9 +1,15 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import logo from '../assets/firebase-logo.png'
 import { Link } from 'react-router';
 import MyContainer from './MyContainer';
 import MyLink from './MyLink';
+import { AuthContext } from '../context/AuthContext';
 const Navbar = () => {
+    //ata amader authProvider component teke asche 
+
+    const result = useContext(AuthContext)
+    console.log (result)
+
     return (
         // amra ata full kaj korsi MyLink Component 
     <div className=' py-2 border-b border-b-slate-300 text-white bg-black'>
