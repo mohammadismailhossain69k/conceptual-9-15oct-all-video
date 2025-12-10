@@ -1,108 +1,104 @@
-import React, {  useRef, useState } from 'react';
-import MyContainer from '../components/MyContainer';
-import MyLink from '../components/MyLink';
+import React, { useContext, useRef, useState } from "react";
+import MyContainer from "../components/MyContainer";
+import MyLink from "../components/MyLink";
 import { FaEye } from "react-icons/fa";
 import { IoEyeOff } from "react-icons/io5";
-import { GithubAuthProvider, GoogleAuthProvider, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signOut} from 'firebase/auth';
-import { auth } from '../fairbase/fairbase.config';
-import { toast } from 'react-toastify';
+
+import { toast } from "react-toastify";
+import { AuthContext } from "../context/AuthContext";
+
 const Signin = () => {
-  const [show,setShow] = useState(false)
-const [user, setUser]= useState(null)
-// forget password ar jorno useRef use
+  const [show, setShow] = useState(false);
+  // const [user, setUser] = useState(null);
+  // forget password ar jorno useRef use
+  //signup teke authcontext ta anchi
+  const {
+    signInWithEmailAndPasswordFunc,
+    signInWithGoogleFunc,
+    signInWithGithubFunc,
+    sendPasswordResetEmailFunc,
+    user,
+    setUser,
+    setLoading,
+  } = useContext(AuthContext);
+  const emailRaf = useRef(null);
 
-const emailRaf = useRef(null)
+  const handleSignin = (e) => {
+    e.preventDefault();
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+    signInWithEmailAndPasswordFunc(email, password)
+      //fairbase teke ana signin work
+      .then((res) => {
+        setLoading(false);
+        // amra akane cheek korbo email verify kina
+        if (!res.user.emailVerified) {
+          console.log(res);
+          toast.error("You email not verified");
+          return;
+        }
 
-// firebase teke anchi
-const googleProvider = new GoogleAuthProvider();
-const githubProvider = new GithubAuthProvider();
+        //
+        console.log(res);
+        //user take anbo
+        setUser(res.user);
+        toast.success("Signin Successful");
+      })
+      .catch((e) => {
+        console.log(e);
+        toast.error(e.message);
+      });
+  };
 
+  console.log(user);
 
-const handleSignin = (e)=> {
-  e.preventDefault();
-  const email = e.target.email.value;
-  const password =e.target.password.value;
-  
-  console.log ('cheek handleSigning', {email, password})
-  //fairbase teke ana signin work
-  signInWithEmailAndPassword(auth, email, password)
-  .then(res=> {
-    // amra akane cheek korbo email verify kina 
-    if(res.user.emailVerified === false){
-      console.log(res)
-      toast.error('You email not verified')
-      return;
-    }
+  //Signin Google work //support session
+  const handleGoogleSignin = () => {
+    console.log("google signin");
+    signInWithGoogleFunc()
+      .then((res) => {
+        console.log(res);
+        //user take anbo
+        setLoading(false);
+        setUser(res.user);
+        toast.success("Signin Successful");
+      })
+      .catch((e) => {
+        console.log(e);
+        toast.error(e.message);
+      });
+  };
+  //Finished Signin google work
 
-    //
-    console.log (res)
-    //user take anbo 
-    setUser(res.user)
-    toast.success('Signin Successful')
-  }).catch(e=> {
-    console.log (e)
-    toast.error(e.message)
-  })
+  // work github signin
+  const handleGithubSignin = () => {
+    signInWithGithubFunc()
+      .then((res) => {
+        console.log(res);
+        setUser(res.user);
+        toast.success("Signin Successful");
+      })
+      .catch((e) => {
+        toast.error(e.message);
+      });
+  };
 
-}
+  // Forget password work
+  const handleForgerPassword = () => {
+    // useRef diye value ta anci ueRef use kora hoys email
+    const email = emailRaf.current.value;
+    sendPasswordResetEmailFunc(email)
+      .then((res) => {
+        console.log(res);
+        setLoading(false);
+        toast.success("Cheek your email to reset password");
+      })
+      .catch((e) => {
+        toast.error(e.message);
+      });
+  };
 
-const handleSignOUt = ()=> {
-  signOut(auth)
-  .then(()=> {
-    toast.success('Signout successful')
-    setUser(null)//setUser o chole jabe
-  }).catch(e=>{
-    toast.error(e.message)
-  })
-}
-
-console.log (user)
-
-//Signin Google work //support session
-  const handleGoogleSignin = ()=>{
-    console.log ('google signin')
-  signInWithPopup(auth,googleProvider)
-  .then(res=> {
-    console.log (res)
-    //user take anbo 
-    setUser(res.user)
-    toast.success('Signin Successful')
-  }).catch(e=> {
-    console.log (e)
-    toast.error(e.message)
-  })
-  }
-//Finished Signin google work 
-
-// Github Signin work 
-  const handleGithubSignin = () =>{
-    signInWithPopup(auth, githubProvider)
-    .then(res=>{
-      console.log (res)
-      toast.success('Github Signin Successful')
-      setUser(res.user)
-    })
-    .catch(e=>{
-      console.log (e)
-      toast.error(e.message)
-    })
-  }
-
-  // Forget password work 
-  const handleForgerPassword = (e) => {
-    // useRef diye value ta anci ueRef use kora hoys email 
-    const email = emailRaf.current.value
-    sendPasswordResetEmail(auth, email)
-    .then(res=>{
-      console.log (res)
-      toast.success("Cheek your email to reset password")
-    })
-    .catch(e=> {
-      toast.error(e.message)
-    })
-  }
-
-    return (
+  return (
     <div className="min-h-[calc(100vh-20px)] flex items-center justify-center bg-linear-to-br from-blue-500 via-indigo-600 to-purple-600 relative overflow-hidden">
       {/* Animated glow orbs */}
       <div className="absolute inset-0">
@@ -125,15 +121,6 @@ console.log (user)
 
           {/* Login card */}
           <div className="w-full max-w-md backdrop-blur-lg bg-white/10 border border-white/20 shadow-2xl rounded-2xl p-8">
-         {user? <div>
-          <img src={user?.photoURL || "https://lh3.googleusercontent.com/a/ACg8ocI_WzeGUiFDX5uazBNKy1ANYuq2WbzNJn9obKBLcMM_MVGBIf8=s96-c"} className='w-20 h-20 rounded-full mx-auto' alt="" />
-
-          <h2 className='text-xl font-semibold text-center mt-3'>{user?.displayName}</h2>
-          <p className='text-white/80 font-semibold my-3 text-center'>{user?.email}</p>
-          <button onClick={handleSignOUt} className='my-btn'>Sign Out</button>
-          
-          </div>
-         : 
             <form onSubmit={handleSignin} className="space-y-5">
               <h2 className="text-2xl font-semibold mb-2 text-center text-white">
                 Sign In
@@ -145,7 +132,7 @@ console.log (user)
                   type="email"
                   name="email"
                   ref={emailRaf}
-                //   ref={emailRef}
+                  //   ref={emailRef}
                   placeholder="example@email.com"
                   className="input input-bordered w-full bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
@@ -155,23 +142,33 @@ console.log (user)
                 <label className="block text-sm mb-1">Password</label>
                 <input
                   name="password"
-                  type={show?'text': 'password'}
+                  type={show ? "text" : "password"}
                   placeholder="••••••••"
                   className="input input-bordered w-full bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
-               <span onClick={()=> setShow(!show)} className='absolute cursor-pointer right-2 top-9 '>{show ? <FaEye/> : <IoEyeOff/>}</span>
+                <span
+                  onClick={() => setShow(!show)}
+                  className="absolute cursor-pointer right-2 top-9 "
+                >
+                  {show ? <FaEye /> : <IoEyeOff />}
+                </span>
               </div>
 
-          {/* Forget password button  */}
+              {/* Forget password button  */}
 
-              <button className='hover:underline cursor-pointer' 
-              type='button'
-               onClick={handleForgerPassword}>Forget Password </button>
+              <button
+                className="hover:underline cursor-pointer"
+                type="button"
+                onClick={handleForgerPassword}
+              >
+                Forget Password{" "}
+              </button>
               {/* login button  */}
+
               <button type="submit" className="my-btn">
                 Login
               </button>
-              
+
               {/* Divider */}
               <div className="flex items-center justify-center gap-2 my-2">
                 <div className="h-px w-16 bg-white/30"></div>
@@ -180,7 +177,8 @@ console.log (user)
               </div>
 
               {/* Google Signin */}
-              <button onClick={handleGoogleSignin}
+              <button
+                onClick={handleGoogleSignin}
                 type="button"
                 className="flex items-center justify-center gap-3 bg-white text-gray-800 px-5 py-2 rounded-lg w-full font-semibold hover:bg-gray-100 transition-colors cursor-pointer"
               >
@@ -193,7 +191,8 @@ console.log (user)
               </button>
 
               {/* Github Signin */}
-              <button onClick={handleGithubSignin}
+              <button
+                onClick={handleGithubSignin}
                 type="button"
                 className="flex items-center justify-center gap-3 bg-white text-gray-800 px-5 py-2 rounded-lg w-full font-semibold hover:bg-gray-100 transition-colors cursor-pointer"
               >
@@ -206,16 +205,15 @@ console.log (user)
               </button>
 
               <p className="text-center text-sm text-white/80 mt-3">
-                Don’t have an account?{" "}</p>
-                <MyLink
-                  to="/signup"
-                  className="text-pink-300 hover:text-white underline"
-                >
-                  Sign up
-                </MyLink>
-              
+                Don’t have an account?{" "}
+              </p>
+              <MyLink
+                to="/signup"
+                className="text-pink-300 hover:text-white underline"
+              >
+                Sign up
+              </MyLink>
             </form>
-         }
           </div>
         </div>
       </MyContainer>

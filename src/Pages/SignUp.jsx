@@ -1,114 +1,120 @@
-import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
 import MyContainer from "../components/MyContainer";
 import MyLink from "../components/MyLink";
 // import { toast } from "react-toastify";
-import { auth } from "../fairbase/fairbase.config";
-import { useState } from "react";
+// import { auth } from "../fairbase/fairbase.config";
+import { useContext, useState } from "react";
 import { FaEye } from "react-icons/fa";
 import { IoEyeOff } from "react-icons/io5";
 
-import {toast} from "react-toastify"
+import { toast } from "react-toastify";
 import { AuthContext } from "../context/AuthContext";
 
 const SignUp = () => {
-  
+  const [show, setShow] = useState(false);
+  //amra akane AuthProvider ta niye ashci
 
-  const [show,setShow] = useState(false)
+  const {
+    createUserWithEmailAndPasswordFunc,
+    updateProfileFunc,
+    sendEmailVerificationFunc,
+    signOutFunc,
+    setUser,
+  } = useContext(AuthContext);
 
   const handleSignup = (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const displayName = e.target.name.value;
-  const photoURL = e.target.photo.value;
-  const email = e.target.email.value; 
-  const password = e.target.password.value;
-  //6 tar kom password hole ai error ta dive 
-  if(password.length<6){
-    toast.error('Password should be at least 6 digit')
-    return
-  }
-//password ar jorno ata 
-  const regex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;//ata akta object
-//uporer condition ta fulfill na korle ai error ta dekabe 
-if (!regex.test(password)) {
-  toast.error("Password must be at least 8 characters and include uppercase, lowercase, number, and a special character.");
-  return
-}
+    const displayName = e.target.name.value;
+    const photoURL = e.target.photo.value;
+    const email = e.target.email.value;
+    const password = e.target.password.value;
 
-  console.log("Sign Up Complete", { displayName,photoURL,email, password });
+    //6 tar kom password hole ai error ta dive
+    if (password.length < 6) {
+      toast.error("Password should be at least 6 digit");
+      return;
+    }
+    //password ar jorno ata
+    const regex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/; //ata akta object
+    //uporer condition ta fulfill na korle ai error ta dekabe
+    if (!regex.test(password)) {
+      toast.error(
+        "Password must be at least 8 characters and include uppercase, lowercase, number, and a special character."
+      );
+      return;
+    }
 
-// if(password.includes("A") )
+    console.log("Sign Up Complete", { displayName, photoURL, email, password });
 
-  //1st step: create user 
+    // if(password.includes("A") )
 
-  createUserWithEmailAndPassword(auth, email, password)
-    .then((res) => {
+    //1st step: create user
 
-    //2nd step: Update profile
-      updateProfile(res.user, {
-    displayName,//key and value jodi sem hoy tahole amader key value dithe hobe na 
-    photoURL,
-})
+    createUserWithEmailAndPasswordFunc(email, password)
+      .then((res) => {
+        //2nd step: Update profile
+        updateProfileFunc(displayName, photoURL)
+          .then(() => {
+            console.log(res);
 
-.then(()=> {
-  console.log (res)
+            // 3rd step: Email Verification part:2 video:2 9minute
+            sendEmailVerificationFunc(res.user).then(() => {
+              console.log(res);
+            });
 
-  // 3rd step: Email Verification
-sendEmailVerification(res.user)
-  .then(()=> {
-     console.log (res)
-    toast.success('Signup successful, Cheek your email to validate you account')
-  })
-  .catch(e=> {
-    toast.error(e.message)
-  })
+            //signout user
+            signOutFunc()
+              .then(() => {
+                toast.success(
+                  "Signup successful, Cheek your email to validate you account"
+                );
 
-  //finished email verification work 
-  console.log (res)
-  toast.success("Sign up Successful")
-})
-.catch(e=>{
-  toast.error(e.message)
-})
+                setUser(null);
+              })
+              .catch((e) => {
+                console.log(e);
+                toast.error(e.message);
+              });
 
-      //finished Signup Profile Update work 
-      console.log(res);
-      toast.success('Signup successful');
-    })
+            //finished email verification work
+            console.log(res);
+            toast.success("Sign up Successful");
+          })
+          .catch((e) => {
+            toast.error(e.message);
+          });
 
-    // error message gola chargpt teke anchi
-    .catch((error) => {
-      console.log(error);
+        //finished Signup Profile Update work
+        console.log(res);
+        toast.success("Signup successful");
+      })
 
-      // All errors handled with if/else
-      if (error.code === "auth/popup-closed-by-user") {
-        toast.error("Popup closed before sign in.");
-      } 
-      else if (error.code === "auth/popup-blocked") {
-        toast.error("Popup blocked by browser.");
-      } 
-      else if (error.code === "auth/cancelled-popup-request") {
-        toast.error("Another popup request canceled this one.");
-      } 
-      else if (error.code === "auth/network-request-failed") {
-        toast.error("Network error! Check your internet.");
-      } 
-      else if (error.code === "auth/too-many-requests") {
-        toast.error("Too many attempts! Try again later.");
-      } 
-      else if (error.code === "auth/user-disabled") {
-        toast.error("This account has been disabled.");
-      } 
-      else if (error.code === "auth/account-exists-with-different-credential") {
-        toast.error("Email already exists with another login method.");
-      } 
-      else {
-        toast.error("Something went wrong. Try again.");
-      }
-    });
+      // error message gola chargpt teke anchi
+      .catch((error) => {
+        console.log(error);
 
-};
-
+        // All errors handled with if/else
+        if (error.code === "auth/popup-closed-by-user") {
+          toast.error("Popup closed before sign in.");
+        } else if (error.code === "auth/popup-blocked") {
+          toast.error("Popup blocked by browser.");
+        } else if (error.code === "auth/cancelled-popup-request") {
+          toast.error("Another popup request canceled this one.");
+        } else if (error.code === "auth/network-request-failed") {
+          toast.error("Network error! Check your internet.");
+        } else if (error.code === "auth/too-many-requests") {
+          toast.error("Too many attempts! Try again later.");
+        } else if (error.code === "auth/user-disabled") {
+          toast.error("This account has been disabled.");
+        } else if (
+          error.code === "auth/account-exists-with-different-credential"
+        ) {
+          toast.error("Email already exists with another login method.");
+        } else {
+          toast.error("Something went wrong. Try again.");
+        }
+      });
+  };
 
   return (
     <div className="min-h-[96vh] flex items-center justify-center bg-linear-to-br from-indigo-500 via-purple-600 to-pink-500 relative overflow-hidden">
@@ -136,7 +142,7 @@ sendEmailVerification(res.user)
               Sign Up
             </h2>
 
-            <form onSubmit={handleSignup}  className="space-y-4">
+            <form onSubmit={handleSignup} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Name</label>
                 <input
@@ -172,14 +178,17 @@ sendEmailVerification(res.user)
                 <input
                   // type="password"
                   name="password"
-                  type={show? 'text': 'password'}
+                  type={show ? "text" : "password"}
                   placeholder="••••••••"
                   className="input input-bordered w-full bg-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-pink-400"
-                    // autoComplete="current-password"
-                  />
-                  <span onClick={()=>setShow(!show)} className="absolute right-2 top-9 z-50 cursor-pointer ">
-                    {show ? <FaEye/>: <IoEyeOff/>}
-                    </span>
+                  // autoComplete="current-password"
+                />
+                <span
+                  onClick={() => setShow(!show)}
+                  className="absolute right-2 top-9 z-50 cursor-pointer "
+                >
+                  {show ? <FaEye /> : <IoEyeOff />}
+                </span>
               </div>
 
               {/* button */}
